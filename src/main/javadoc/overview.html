@@ -421,6 +421,14 @@ in other matches or replacements.
 Example of grouping marks usage (with no special purpose):
 <pre>[ (^Anna, Bill, Dave)~NAME, (^Johnson, Smith)~LAST ]</pre>
 </p>
+<p>
+This grouping mark supports any java.util.Regex group in the <a href="regular">Regular</a> element. If the
+regular expression contains any capturing groups then the given name is used to generate new group names
+as follows:
+<pre>
+ &lt;NAME&gt; + &lt;Capturing-Group-Number&gt;
+</pre>
+</p>
 
 <h3>Substitution string</h3>
 <p>

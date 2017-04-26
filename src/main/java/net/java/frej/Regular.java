@@ -20,16 +20,18 @@ along with FREJ.  If not, see <http://www.gnu.org/licenses/>.
 
 package net.java.frej;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class Regular extends Elem {
-
     
-    private String pattern;
+    private final Pattern pattern;
+    private Matcher matcher;
     
     
     Regular(Regex owner, String pattern) {
         super(owner);
-        this.pattern = pattern;
+        this.pattern = Pattern.compile(pattern);
     } // Regular
     
     
@@ -38,7 +40,12 @@ class Regular extends Elem {
         matchStart = i;
         matchLen = 0;
         
-        if (i >= owner.tokens.length || !owner.tokens[i].matches(pattern)) {
+        if (i >= owner.tokens.length) {
+            return Double.POSITIVE_INFINITY;
+        } // if
+        
+        matcher = pattern.matcher(owner.tokens[i]);
+        if (!matcher.matches()) {
             return Double.POSITIVE_INFINITY;
         } // if
         
@@ -49,10 +56,23 @@ class Regular extends Elem {
         return 0;
     } // matchAt
     
+    @Override
+    void saveGroup() {
+        super.saveGroup();
+        
+        if (group == null || group.isEmpty()) {
+            return;
+        } // if
+        
+        for (int grpIdx = 1; grpIdx <= matcher.groupCount(); grpIdx++) {
+            owner.setGroup(group + grpIdx, matcher.group(grpIdx));
+        } // for
+    }
+    
     
     @Override
     public String toString() {
-        return "(!" + pattern + ")" + super.toString();
+        return "(!" + pattern.pattern() + ")" + super.toString();
     } // toString
     
     
