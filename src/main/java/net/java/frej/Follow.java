@@ -33,84 +33,6 @@ final class Follow extends Elem {
     @Override
     double matchAt(int i) {
         
-        class PartMatcher {
-            public int len;
-            public double res;
-            public StringBuilder s = new StringBuilder();
-            
-            public PartMatcher() {
-                len = 0;
-                res = 1;
-            } // PartMatcher
-            
-            public PartMatcher(PartMatcher copy) {
-                len = copy.len;
-                res = copy.res;
-                s.append(copy.s);
-            } // PartMatcher
-            
-            public double matchAtFrom(int i, int j) {
-                
-                
-                while(j < children.length) {
-                    double cur;
-                    
-                    if (children[j].optional) {
-                        PartMatcher incl, excl;
-                        Regex.GroupMap inclGroups, tempGroups;
-
-                        tempGroups = new Regex.GroupMap(owner.groups);
-                        cur = children[j].matchAt(i + len);
-                        incl = new PartMatcher(this);
-                        if (cur < 1) {
-                            incl.res *= 1 - Math.min(cur, 1);
-                            incl.len = len + children[j].getMatchLen();
-                            incl.s.append(children[j].getReplacement());
-                            incl.matchAtFrom(i, j + 1);
-                        } else {
-                            incl.res = 1;
-                            incl.len = 0;
-                        } // else
-                        excl = new PartMatcher(this);
-                        
-                        inclGroups = owner.groups;
-                        owner.groups = tempGroups;
-                        excl.matchAtFrom(i, j + 1);
-                        
-                        if (incl.res < 1 && incl.res <= excl.res) {
-                            res = incl.res;
-                            len = incl.len;
-                            s.replace(0, s.length(), incl.s.toString());
-                            owner.groups = inclGroups;
-                        } else {
-                            res = excl.res;
-                            len = excl.len;
-                            s.replace(0, s.length(), excl.s.toString());
-                        } // else
-                        
-                        return res;
-
-                    } else {
-                        cur = children[j].matchAt(i + len);
-                    } // else
-
-                    res *= 1 - Math.min(cur, 1);
-                    if (res == 0) {
-                        res = 1;
-                        len = 0;
-                        return res;
-                    } // if
-                    len += children[j].getMatchLen();
-                    s.append(children[j].getReplacement());
-                    j++;
-                } // while
-                
-                return (res = 1 - Math.pow(res, 1.0 / len));
-                
-            } // matchAtFrom
-            
-        } // class PartMatcher
-        
         PartMatcher pm = new PartMatcher();
         pm.matchAtFrom(i, 0);
         matchStart = i;
@@ -127,5 +49,86 @@ final class Follow extends Elem {
         return childrenString("(", ")") + super.toString();
     } // toString
     
+    
+    class PartMatcher {
+        public int len;
+        public double res;
+        public StringBuilder s = new StringBuilder();
+        
+        public PartMatcher() {
+            len = 0;
+            res = 1;
+        } // PartMatcher
+        
+        public PartMatcher(PartMatcher copy) {
+            len = copy.len;
+            res = copy.res;
+            s.append(copy.s);
+        } // PartMatcher
+        
+        public double matchAtFrom(int i, int j) {
+            
+            while(j < children.length) {
+                
+                if (children[j].optional) {
+                    return matchOptional(i, j);
+                }
+                
+                double cur = children[j].matchAt(i + len);
+                
+                res *= 1 - Math.min(cur, 1);
+                if (res == 0) {
+                    res = 1;
+                    len = 0;
+                    return res;
+                } // if
+                len += children[j].getMatchLen();
+                s.append(children[j].getReplacement());
+                j++;
+            } // while
+            
+            return (res = 1 - Math.pow(res, 1.0 / len));
+            
+        } // matchAtFrom
+        
+        public double matchOptional(int i, int j) {
+            final Regex.GroupMap tempGroups = new Regex.GroupMap(owner.groups);
+            final double cur = children[j].matchAt(i + len);
+            final PartMatcher incl = new PartMatcher(this);
+            if (cur < 1) {
+                incl.res *= 1 - Math.min(cur, 1);
+                incl.len = len + children[j].getMatchLen();
+                incl.s.append(children[j].getReplacement());
+                incl.matchAtFrom(i, j + 1);
+            } else {
+                incl.res = 1;
+                incl.len = 0;
+            } // else
+            
+            final PartMatcher excl = new PartMatcher(this);
+            final Regex.GroupMap inclGroups = owner.groups;
+            owner.groups = tempGroups;
+            excl.matchAtFrom(i, j + 1);
+            
+            if (incl.res < 1 && incl.res <= excl.res) {
+                res = incl.res;
+                len = incl.len;
+                s.replace(0, s.length(), incl.s.toString());
+                owner.groups = inclGroups;
+                
+                if (children[j].not) {
+                    res = Double.POSITIVE_INFINITY;
+                }
+            } else {
+                res = excl.res;
+                len = excl.len;
+                s.replace(0, s.length(), excl.s.toString());
+            } // else
+            
+            return res;
+            
+        } // matchOptional
+        
+    } // class PartMatcher
     
 } // class FuzzyRegexFollow

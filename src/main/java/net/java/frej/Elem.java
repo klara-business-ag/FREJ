@@ -29,6 +29,7 @@ abstract class Elem {
     String replacement, matchReplacement;
     String group;
     boolean optional;
+    boolean not;
     
     
     Elem(Regex owner) {
@@ -68,46 +69,42 @@ abstract class Elem {
         StringBuilder s = new StringBuilder();
         
         if (replacement == null) {
-            
             return getMatchReplacement();
-            
-        } else {
+        }
         
-            for (int i = 0; i < replacement.length(); i++) {
-                char c = replacement.charAt(i);
-                
-                if (c == '$' && i < replacement.length() - 1) {
-                    c = replacement.charAt(++i);
-
-                    switch (c) {
-                    case '$':
-                        s.append(getMatchReplacement());
-                        break;
-                    case '<':
-                        s.append(owner.prefix());
-                        break;
-                    case '>':
-                        s.append(owner.suffix());
-                        break;
-                    default:
-                        if (i < 2 || replacement.charAt(i - 2) != '(') {
-                            s.append(owner.getGroup(replacement.substring(i, i + 1)));
-                        } else {
-                            String name = replacement.substring(i).replaceFirst("\\).*", "");
-                            s.deleteCharAt(s.length() - 1);
-                            s.append(owner.getGroup(name));
-                            i += name.length();
-                        } // else
-                        break;
-                    } // switch
-                    continue;
-                } // if
-                
-                s.append(c);
-            } // for
+        for (int i = 0; i < replacement.length(); i++) {
+            char c = replacement.charAt(i);
             
-        } // else
-
+            if (c == '$' && i < replacement.length() - 1) {
+                c = replacement.charAt(++i);
+                
+                switch (c) {
+                case '$':
+                    s.append(getMatchReplacement());
+                    break;
+                case '<':
+                    s.append(owner.prefix());
+                    break;
+                case '>':
+                    s.append(owner.suffix());
+                    break;
+                default:
+                    if (i < 2 || replacement.charAt(i - 2) != '(') {
+                        s.append(owner.getGroup(replacement.substring(i, i + 1)));
+                    } else {
+                        String name = replacement.substring(i).replaceFirst("\\).*", "");
+                        s.deleteCharAt(s.length() - 1);
+                        s.append(owner.getGroup(name));
+                        i += name.length();
+                    } // else
+                    break;
+                } // switch
+                continue;
+            } // if
+            
+            s.append(c);
+        } // for
+        
         return s.toString();
     } //getReplacement
     

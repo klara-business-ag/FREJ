@@ -51,7 +51,6 @@ public final class Regex {
     
     private Fuzzy fuzzy = new Fuzzy();
     private Elem root;
-    private Special terminator = new Special(this, null);
     String[] tokens;
     private int[] tokenPos;
     private double matchResult;
@@ -92,7 +91,7 @@ public final class Regex {
             } else {
                 p = 0;
             } // else
-            subs.put(ssubs[i].substring(0, p), parse(ssubs[i].substring(p).replaceAll("\\s+", "")));
+            subs.put(ssubs[i].substring(0, p), parse(p, ssubs[i].substring(p).replaceAll("\\s+", "")));
         } // for
         root = subs.get("");
     } // Regex
@@ -217,7 +216,11 @@ public final class Regex {
     } // eliminateEscapes
     
     
-    private Elem parse(String pattern) {
+    private Elem parse(int parsePos, String pattern) {
+        if (pattern.isEmpty()) {
+            throw new RuntimeException("Unexpected end of pattern at " + parsePos);
+        }
+        
         Elem retVal;
         String repl = null;
         String g;
@@ -246,14 +249,18 @@ public final class Regex {
         if (pattern.charAt(0) == '(') {
             String expr;
             int p = 1;
-            boolean optional;
-
+            
+            boolean optional = false;
             if (pattern.charAt(p) == '?') {
                 optional = true;
                 p++;
-            } else {
-                optional = false;
-            } // else
+            } // if
+            
+            boolean not = false;
+            if (pattern.charAt(p) == '-') {
+                not = true;
+                p++;
+            } // if
             
             if (pattern.length() <= p || pattern.charAt(pattern.length() - 1) != ')') {
                 throw new RuntimeException("Unclosed closure!"); 
@@ -298,8 +305,9 @@ public final class Regex {
                 break;
                 
             } // switch
-
+            
             retVal.optional = optional;
+            retVal.not = not;
             
         } else {
             retVal = new Token(this, eliminateEscapes(pattern)); 
@@ -346,7 +354,7 @@ public final class Regex {
             } else if (c == ')') {
                 brackets--;
             } else if (c == ',' && brackets == 0) {
-                list.add(parse(s.substring(0, i)));
+                list.add(parse(-1, s.substring(0, i)));
                 s.delete(0, i + 1);
                 i = -1;
                 continue;

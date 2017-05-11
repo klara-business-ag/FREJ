@@ -338,6 +338,16 @@ result of "Follow" is evaluated as if consisting of N-1 elements only).
 </p>
 
 <hr/>
+<h3 id="optional">Optional NOT</h3>
+<p>
+This element is constructed by enclosing other element (i.e. the only child) in brackets and putting "<b>?-</b>"
+mark immediately after opening bracket:<br/>
+<pre>(?- child)</pre>
+It is usable only inside other elements (like "Follow" or "Both"), where it prevents a match if some of the
+optional children exist.
+</p>
+
+<hr/>
 <h3 id="numeric">Numeric</h3>
 <p>
 This element is constructed by putting "<b>#</b>" mark immediately
