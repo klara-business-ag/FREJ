@@ -51,17 +51,17 @@ public final class Fuzzy {
     /** if result of match is higher than threshold, boolean methods return "false" */
     public double threshold = 0.34;
 
-    protected final int MAX_PATTERN = 64;
-    protected final int MAX_SOURCE = 256;
-    protected final int BIG_VALUE = 1000000;
-    protected int[][] e = new int[MAX_PATTERN + 1][MAX_SOURCE + 1];
-    protected WayType[][] w = new WayType[MAX_PATTERN + 1][MAX_SOURCE + 1];
+    private final int MAX_PATTERN = 64;
+    private final int MAX_SOURCE = 256;
+    private final int BIG_VALUE = 1000000;
+    private final int[][] e = new int[MAX_PATTERN + 1][MAX_SOURCE + 1];
+    private final WayType[][] w = new WayType[MAX_PATTERN + 1][MAX_SOURCE + 1];
     
     
     private static enum WayType {
         TRANSIT, INSERT, DELETE, SUBST, SWAP
     } // enum WayType
-
+    
     
     /**
      * Tries to find substring "pattern" in the "source" and if successful,
@@ -125,15 +125,16 @@ public final class Fuzzy {
      * @return normalized best distance (i.e. distance / pattern.length())
      */
     public double containability(CharSequence source, CharSequence pattern) {
-        int m = pattern.length() + 1;
-        int n = source.length() + 1;
+        final int m = Math.min(pattern.length(), MAX_PATTERN) + 1;
+        final int n = Math.min(source.length(), MAX_SOURCE) + 1;
+        
         int best, start;
         char p, s, p1, s1;
-
+        
         for (int x = 0; x < n; x++) {
             e[0][x] = 0;
         } // for
-
+        
         p = 0;
         
         for (int y = 1; y < m; y++) {
@@ -254,12 +255,11 @@ public final class Fuzzy {
      * @return normalized distance (distance / average(source.length(), pattern.length()))
      */
     public double similarity(CharSequence source, CharSequence pattern) {
-        int m;
-        int n;
+        final int m = Math.min(pattern.length(), MAX_PATTERN) + 1;
+        final int n = Math.min(source.length(), MAX_SOURCE) + 1;
+        
         char s, p, s1, p1;
         
-        m = pattern.length() + 1;
-        n = source.length() + 1;
         for (int x = 0; x < n; x++) {
             e[0][x] = x; 
         } // for
